@@ -1,0 +1,1 @@
+export { HtmlToPdf } from './HtmlToPdf'

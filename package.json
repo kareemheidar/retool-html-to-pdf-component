@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@tryretool/custom-component-support": "latest",
+    "html2pdf.js": "^0.10.2",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -29,6 +30,7 @@
     ]
   },
   "devDependencies": {
+    "@types/html2pdf.js": "^0.10.0",
     "@types/react": "^18.2.55",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
@@ -39,9 +41,9 @@
     "vitest": "^4.0.17"
   },
   "retoolCustomComponentLibraryConfig": {
-    "name": "custom-component-collection",
-    "label": "Custom Component Collection",
-    "description": "A collection of reusable Retool custom components",
+    "name": "KLibrary",
+    "label": "KLibrary",
+    "description": "testing components",
     "entryPoint": "src/index.tsx",
     "outputPath": "dist"
   }
