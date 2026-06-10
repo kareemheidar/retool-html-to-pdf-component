@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@tryretool/custom-component-support": "latest",
+    "dompurify": "^3.4.9",
     "html2pdf.js": "^0.10.2",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",

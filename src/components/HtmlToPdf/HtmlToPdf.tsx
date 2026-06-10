@@ -297,17 +297,9 @@ export const HtmlToPdf: FC = () => {
         ) : null}
       </div>
 
-      <div
-        style={{
-          maxHeight: 600,
-          overflow: 'auto',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
-          background: '#f9fafb',
-          padding: 12,
-        }}
-      >
-        {/* This is the exact DOM html2pdf snapshots into the PDF */}
+      {/* Kept off-screen (not display:none) so it has real layout for html2pdf to
+          snapshot, without showing the rendered HTML in the Retool UI. */}
+      <div style={{ position: 'fixed', top: 0, left: '-99999px' }}>
         <div ref={containerRef}>
           {cssContent && <style>{cssContent}</style>}
           <div className="pdf-render-root">
