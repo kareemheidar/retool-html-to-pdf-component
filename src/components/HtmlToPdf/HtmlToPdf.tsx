@@ -214,6 +214,8 @@ export const HtmlToPdf: FC = () => {
       setPdfBase64(base64)
       setStatus('success')
     } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('HtmlToPdf generate failed:', err)
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
       setStatus('error')
@@ -245,6 +247,8 @@ export const HtmlToPdf: FC = () => {
 
       setStatus('success')
     } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('HtmlToPdf download failed:', err)
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
       setStatus('error')
