@@ -1,6 +1,7 @@
 import { type FC, useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { Retool } from '@tryretool/custom-component-support'
 import html2pdf from 'html2pdf.js'
+import DOMPurify from 'dompurify'
 
 // Inline default styles applied around the rendered HTML so tables/cards/page
 // breaks look correct both on screen and inside the generated PDF. Retool
@@ -109,6 +110,11 @@ export const HtmlToPdf: FC = () => {
     initialValue: 'document.pdf',
   })
 
+  const [sanitizeHtml] = Retool.useStateBoolean({
+    name: 'sanitizeHtml',
+    initialValue: true,
+  })
+
   const [, setPdfBase64] = Retool.useStateString({
     name: 'pdfBase64',
     initialValue: '',
@@ -125,12 +131,18 @@ export const HtmlToPdf: FC = () => {
   })
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const [localBusy, setLocalBusy] = useState(false)
+  const [busyCount, setBusyCount] = useState(0)
+  const localBusy = busyCount > 0
+
+  // Bumped at the start of every generate/download call so a slower, older
+  // call can detect it's been superseded and skip writing stale results.
+  const requestIdRef = useRef(0)
 
   const processedHtml = useMemo(() => {
     if (typeof window === 'undefined' || !htmlContent) return htmlContent
     try {
-      const doc = new DOMParser().parseFromString(htmlContent, 'text/html')
+      const safeHtml = sanitizeHtml ? DOMPurify.sanitize(htmlContent) : htmlContent
+      const doc = new DOMParser().parseFromString(safeHtml, 'text/html')
 
       // Wrap each .summary-card so html2pdf positions the wrapper (not the card border)
       // at the page boundary, giving 12px of breathing room before the card's border.
@@ -168,7 +180,7 @@ export const HtmlToPdf: FC = () => {
     } catch {
       return htmlContent
     }
-  }, [htmlContent])
+  }, [htmlContent, sanitizeHtml])
 
   const buildPdfBlob = useCallback(async (): Promise<Blob> => {
     if (!containerRef.current) {
@@ -198,7 +210,8 @@ export const HtmlToPdf: FC = () => {
   }, [fileName])
 
   const generate = useCallback(async () => {
-    setLocalBusy(true)
+    const requestId = ++requestIdRef.current
+    setBusyCount((c) => c + 1)
     setError('')
     setStatus('rendering')
 
@@ -211,21 +224,27 @@ export const HtmlToPdf: FC = () => {
       const buffer = await blob.arrayBuffer()
       const base64 = arrayBufferToBase64(buffer)
 
+      // A newer generate/download call started while this one was rendering
+      // (e.g. the user kept typing). Its result is stale, so drop it.
+      if (requestId !== requestIdRef.current) return
+
       setPdfBase64(base64)
       setStatus('success')
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('HtmlToPdf generate failed:', err)
+      if (requestId !== requestIdRef.current) return
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
       setStatus('error')
     } finally {
-      setLocalBusy(false)
+      setBusyCount((c) => c - 1)
     }
   }, [buildPdfBlob, setPdfBase64, setStatus, setError])
 
   const download = useCallback(async () => {
-    setLocalBusy(true)
+    const requestId = ++requestIdRef.current
+    setBusyCount((c) => c + 1)
     setError('')
     setStatus('rendering')
 
@@ -236,8 +255,9 @@ export const HtmlToPdf: FC = () => {
       // Render once, reuse the blob for both base64 output and browser download.
       const blob = await buildPdfBlob()
       const buffer = await blob.arrayBuffer()
-      setPdfBase64(arrayBufferToBase64(buffer))
 
+      // The actual file download always reflects what the user asked for, but
+      // skip updating shared state if a newer call has since superseded it.
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -245,15 +265,19 @@ export const HtmlToPdf: FC = () => {
       a.click()
       URL.revokeObjectURL(url)
 
+      if (requestId !== requestIdRef.current) return
+
+      setPdfBase64(arrayBufferToBase64(buffer))
       setStatus('success')
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('HtmlToPdf download failed:', err)
+      if (requestId !== requestIdRef.current) return
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
       setStatus('error')
     } finally {
-      setLocalBusy(false)
+      setBusyCount((c) => c - 1)
     }
   }, [buildPdfBlob, fileName, setPdfBase64, setStatus, setError])
 
@@ -313,8 +337,7 @@ export const HtmlToPdf: FC = () => {
                 <div className="pdf-title-ref">{referenceNumber}</div>
               </div>
             )}
-            {/* Content comes from a trusted Retool query/model bound to htmlContent.
-                Sanitize upstream if it can ever contain untrusted user input. */}
+            {/* processedHtml is run through DOMPurify above when sanitizeHtml is true (default). */}
             <div dangerouslySetInnerHTML={{ __html: processedHtml }} />
           </div>
         </div>
