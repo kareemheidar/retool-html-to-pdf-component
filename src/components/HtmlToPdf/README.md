@@ -14,7 +14,7 @@ Converts an HTML string to a multi-page A4 PDF using `html2pdf.js` (html2canvas 
 | `fileName`        | string | no       | Name of the downloaded file. Defaults to `document.pdf`. |
 | `sanitizeHtml`    | boolean | no      | When `true` (default), `htmlContent` is run through `DOMPurify` before rendering, stripping scripts and inline event handlers. Turn off only if you trust the source and need markup DOMPurify would strip. |
 | `autoGenerate`    | boolean | no      | When `true` (default), the PDF regenerates automatically 400 ms after any content input changes. Set `false` to control timing explicitly with `triggerGenerate` instead. |
-| `triggerGenerate` | boolean | no      | Pulse to `true` (e.g. via a **Set value** action) to start generation on demand. The component consumes it and resets it back to `false`, so it can be pulsed again. Works regardless of `autoGenerate`. |
+| `triggerGenerate` | boolean | no      | Bind to a Temporary State variable's value. When it becomes `true`, generation starts. See [Explicit trigger](#explicit-trigger) below, there's a setup step required, it's not as simple as pointing this at a literal. |
 
 ## Outputs
 
@@ -41,7 +41,16 @@ Downstream flows should trigger off these events rather than a fixed delay. `pdf
 By default (`autoGenerate: true`), the component re-generates the PDF 400 ms after any input (`htmlContent`, `cssContent`, `referenceNumber`, `fileName`) changes. No button click required. `pdfBase64` is always up to date.
 
 ### Explicit trigger
-Set `autoGenerate` to `false` to stop regenerating on every input change (useful when the app sets several inputs in sequence and only wants one generation at the end). Then pulse `triggerGenerate` to `true` when ready, generation starts on the same render pass, and `triggerGenerate` is reset to `false` automatically. Bind `triggerGenerate` from a **Set value** action, not a formula, since a formula that evaluates to a persistent `true` will fight with the component resetting it.
+Set `autoGenerate` to `false` to stop regenerating on every input change (useful when the app sets several inputs in sequence and only wants one generation at the end).
+
+Custom component properties in Retool are one-way from the app's side: you bind `triggerGenerate` to something, you can't call `htmlToPdf1.setTriggerGenerate(...)` from a query, that method doesn't exist. To pulse it from a query, you need a piece of app state to bind through:
+
+1. Add a **Temporary State** component to the app, e.g. named `genTrigger`, initial value `false`.
+2. Bind `htmlToPdf1`'s `triggerGenerate` property to `{{ genTrigger.value }}`.
+3. In your query/JS, once all the other inputs are set, call `genTrigger.setValue(true)` to fire generation.
+4. Add an **Event Handler** on `htmlToPdf1` for `generated` (and `generateError`) that resets it: `genTrigger.setValue(false)`. This step is required, the component can consume `triggerGenerate` and reset its own output, but it has no way to write back into `genTrigger` itself. Without resetting `genTrigger`, the next `setValue(true)` won't register as a change and won't fire again.
+
+Works regardless of `autoGenerate`.
 
 ### Page breaks
 - `.summary-card` and `.summary-row` elements are kept whole — they are never split across pages.
