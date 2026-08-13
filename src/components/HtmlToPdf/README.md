@@ -12,6 +12,7 @@ Converts an HTML string to a multi-page A4 PDF using `html2pdf.js` (html2canvas 
 | `cssContent`      | string | no       | CSS rules to apply to the rendered HTML. Keeps styles separate from markup. |
 | `referenceNumber` | string | no       | If provided, renders a styled title block at the top of page 1 (e.g. `ILEXP-0067`). |
 | `fileName`        | string | no       | Name of the downloaded file. Defaults to `document.pdf`. |
+| `sanitizeHtml`    | boolean | no      | When `true` (default), `htmlContent` is run through `DOMPurify` before rendering, stripping scripts and inline event handlers. Turn off only if you trust the source and need markup DOMPurify would strip. |
 
 ## Outputs
 
@@ -20,6 +21,15 @@ Converts an HTML string to a multi-page A4 PDF using `html2pdf.js` (html2canvas 
 | `pdfBase64` | string | Base64-encoded PDF bytes. Updated automatically on every content change. |
 | `status`    | string | `idle` → `rendering` → `generating` → `success` or `error` |
 | `error`     | string | Error message when `status === 'error'`. Empty otherwise. |
+
+## Events
+
+| Event          | Fires when |
+|----------------|------------|
+| `generated`    | `pdfBase64` has finished updating (auto-generate or Download) and reflects the latest inputs. |
+| `generateError`| Generation failed. `error` holds the message. |
+
+Downstream flows should trigger off these events rather than a fixed delay. `pdfBase64` updates asynchronously (debounce + render + encode), a query that reads it immediately after an input change may see stale or empty data. Wire an **Event Handler** on the component for `generated` to run whatever should happen next (upload, download trigger, notification, etc.).
 
 ---
 
@@ -73,8 +83,10 @@ body: {{ htmlToPdf1.pdfBase64 }}
 {{ htmlToPdf1.error }}
 ```
 
+To upload/download automatically once the PDF is ready, don't gate on a delay, use the `generated` event: open the component's **Event Handlers**, add a handler for `generated`, and point it at the query that reads `htmlToPdf1.pdfBase64`.
+
 ---
 
 ## Security
 
-`htmlContent` is rendered via `dangerouslySetInnerHTML`. Only bind it to HTML you control (e.g. server-rendered templates or transformer-built strings). If the content can ever include user-supplied input, sanitize it upstream — for example with `DOMPurify` in a Retool transformer before passing it to this component.
+`htmlContent` is rendered via `dangerouslySetInnerHTML`. By default (`sanitizeHtml: true`), it's run through `DOMPurify` first, which strips `<script>` tags and inline event handlers. Only disable `sanitizeHtml` for content you fully control.

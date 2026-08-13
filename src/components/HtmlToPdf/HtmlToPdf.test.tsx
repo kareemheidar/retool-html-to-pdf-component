@@ -24,6 +24,7 @@ vi.mock('@tryretool/custom-component-support', () => ({
       const value = (stateStore[opts.name] as boolean | undefined) ?? opts.initialValue
       return [value, (v: boolean) => { stateStore[opts.name] = v }]
     }),
+    useEventCallback: vi.fn(() => vi.fn()),
   },
 }))
 

@@ -130,6 +130,11 @@ export const HtmlToPdf: FC = () => {
     initialValue: '',
   })
 
+  // Fired once pdfBase64 has actually finished updating, so app flows can
+  // trigger off this instead of guessing how long generation takes.
+  const onGenerated = Retool.useEventCallback({ name: 'generated' })
+  const onGenerateError = Retool.useEventCallback({ name: 'generateError' })
+
   const containerRef = useRef<HTMLDivElement>(null)
   const [busyCount, setBusyCount] = useState(0)
   const localBusy = busyCount > 0
@@ -230,6 +235,7 @@ export const HtmlToPdf: FC = () => {
 
       setPdfBase64(base64)
       setStatus('success')
+      onGenerated()
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('HtmlToPdf generate failed:', err)
@@ -237,10 +243,11 @@ export const HtmlToPdf: FC = () => {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
       setStatus('error')
+      onGenerateError()
     } finally {
       setBusyCount((c) => c - 1)
     }
-  }, [buildPdfBlob, setPdfBase64, setStatus, setError])
+  }, [buildPdfBlob, setPdfBase64, setStatus, setError, onGenerated, onGenerateError])
 
   const download = useCallback(async () => {
     const requestId = ++requestIdRef.current
@@ -269,6 +276,7 @@ export const HtmlToPdf: FC = () => {
 
       setPdfBase64(arrayBufferToBase64(buffer))
       setStatus('success')
+      onGenerated()
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('HtmlToPdf download failed:', err)
@@ -276,10 +284,11 @@ export const HtmlToPdf: FC = () => {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
       setStatus('error')
+      onGenerateError()
     } finally {
       setBusyCount((c) => c - 1)
     }
-  }, [buildPdfBlob, fileName, setPdfBase64, setStatus, setError])
+  }, [buildPdfBlob, fileName, setPdfBase64, setStatus, setError, onGenerated, onGenerateError])
 
   // Keep a stable ref so the debounced effect always calls the latest generate
   const generateRef = useRef(generate)
