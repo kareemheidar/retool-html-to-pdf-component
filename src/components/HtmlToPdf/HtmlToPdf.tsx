@@ -115,6 +115,18 @@ export const HtmlToPdf: FC = () => {
     initialValue: true,
   })
 
+  const [autoGenerate] = Retool.useStateBoolean({
+    name: 'autoGenerate',
+    initialValue: true,
+  })
+
+  // App sets this to true when it wants generation to start; the component
+  // consumes it and resets it back to false so it can be pulsed again later.
+  const [triggerGenerate, setTriggerGenerate] = Retool.useStateBoolean({
+    name: 'triggerGenerate',
+    initialValue: false,
+  })
+
   const [, setPdfBase64] = Retool.useStateString({
     name: 'pdfBase64',
     initialValue: '',
@@ -294,11 +306,21 @@ export const HtmlToPdf: FC = () => {
   const generateRef = useRef(generate)
   useEffect(() => { generateRef.current = generate }, [generate])
 
-  // Auto-generate pdfBase64 whenever any content input changes (debounced)
+  // Auto-generate pdfBase64 whenever any content input changes (debounced).
+  // Disable via autoGenerate when the app wants to control timing explicitly.
   useEffect(() => {
+    if (!autoGenerate) return
     const timer = setTimeout(() => generateRef.current(), 400)
     return () => clearTimeout(timer)
-  }, [htmlContent, cssContent, referenceNumber, fileName])
+  }, [autoGenerate, htmlContent, cssContent, referenceNumber, fileName])
+
+  // Explicit trigger: app sets triggerGenerate to true, we consume it and
+  // reset it back to false so the next pulse can be detected.
+  useEffect(() => {
+    if (!triggerGenerate) return
+    setTriggerGenerate(false)
+    generateRef.current()
+  }, [triggerGenerate, setTriggerGenerate])
 
   return (
     <div style={{ width: '100%' }}>

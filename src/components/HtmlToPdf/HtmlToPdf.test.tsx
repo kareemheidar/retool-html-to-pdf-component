@@ -3,14 +3,17 @@ import { render, screen } from '@testing-library/react'
 import { HtmlToPdf } from './HtmlToPdf'
 
 // html2pdf.js drives real canvas/PDF rendering, which these tests don't exercise.
-// Mocked so the component can be rendered without a canvas implementation.
-vi.mock('html2pdf.js', () => ({
-  default: vi.fn(() => ({
+// Mocked so the component can be rendered without a canvas implementation, and
+// hoisted so tests can assert on how many times it was actually invoked.
+const { html2pdfMock } = vi.hoisted(() => ({
+  html2pdfMock: vi.fn(() => ({
     set: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     outputPdf: vi.fn(async () => new Blob(['pdf'], { type: 'application/pdf' })),
   })),
 }))
+
+vi.mock('html2pdf.js', () => ({ default: html2pdfMock }))
 
 let stateStore: Record<string, unknown> = {}
 
@@ -76,5 +79,24 @@ describe('HtmlToPdf', () => {
     stateStore.referenceNumber = 'ILEXP-0067'
     render(<HtmlToPdf />)
     expect(screen.getByText('ILEXP-0067')).toBeDefined()
+  })
+
+  it('does not generate when autoGenerate is false and triggerGenerate is untouched', async () => {
+    vi.useFakeTimers()
+    stateStore.autoGenerate = false
+    render(<HtmlToPdf />)
+    await vi.advanceTimersByTimeAsync(500)
+    expect(html2pdfMock).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('generates once when triggerGenerate is pulsed to true', async () => {
+    vi.useFakeTimers()
+    stateStore.autoGenerate = false
+    stateStore.triggerGenerate = true
+    render(<HtmlToPdf />)
+    await vi.advanceTimersByTimeAsync(100)
+    expect(html2pdfMock).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
 })
