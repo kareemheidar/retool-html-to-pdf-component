@@ -153,6 +153,13 @@ export const HtmlToPdf: FC = () => {
   const onGenerateError = Retool.useEventCallback({ name: 'generateError' })
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const offscreenRef = useRef<HTMLDivElement>(null)
+
+  // `inert` isn't in this React version's DOM typings yet; set it imperatively
+  // so no interactive element inside arbitrary htmlContent is tab-reachable.
+  useEffect(() => {
+    offscreenRef.current?.setAttribute('inert', '')
+  }, [])
   const [busyCount, setBusyCount] = useState(0)
   const localBusy = busyCount > 0
 
@@ -364,8 +371,10 @@ export const HtmlToPdf: FC = () => {
       )}
 
       {/* Kept off-screen (not display:none) so it has real layout for html2pdf to
-          snapshot, without showing the rendered HTML in the Retool UI. */}
-      <div style={{ position: 'fixed', top: 0, left: '-99999px' }}>
+          snapshot, without showing the rendered HTML in the Retool UI. aria-hidden
+          and tabIndex keep it out of the accessibility tree and tab order, since
+          arbitrary htmlContent can otherwise contain focusable/announced elements. */}
+      <div ref={offscreenRef} style={{ position: 'fixed', top: 0, left: '-99999px' }} aria-hidden="true" tabIndex={-1}>
         <div ref={containerRef}>
           {cssContent && <style>{cssContent}</style>}
           <div className="pdf-render-root">
