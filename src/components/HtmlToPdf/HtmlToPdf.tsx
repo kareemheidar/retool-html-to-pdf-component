@@ -1,4 +1,4 @@
-import { type FC, useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import { type FC, useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
 import { Retool } from '@tryretool/custom-component-support'
 import html2pdf from 'html2pdf.js'
 import DOMPurify from 'dompurify'
@@ -155,10 +155,14 @@ export const HtmlToPdf: FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const offscreenRef = useRef<HTMLDivElement>(null)
 
-  // `inert` isn't in this React version's DOM typings yet; set it imperatively
-  // so no interactive element inside arbitrary htmlContent is tab-reachable.
-  useEffect(() => {
-    offscreenRef.current?.setAttribute('inert', '')
+  // `inert` isn't in this React version's DOM typings yet; set it imperatively.
+  // useLayoutEffect (not useEffect) so it's applied before the first paint,
+  // and both the IDL property and attribute are set for maximum browser support.
+  useLayoutEffect(() => {
+    const node = offscreenRef.current
+    if (!node) return
+    node.setAttribute('inert', '')
+    ;(node as HTMLDivElement & { inert: boolean }).inert = true
   }, [])
   const [busyCount, setBusyCount] = useState(0)
   const localBusy = busyCount > 0
