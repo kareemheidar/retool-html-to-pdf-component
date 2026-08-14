@@ -15,6 +15,7 @@ Converts an HTML string to a multi-page A4 PDF using `html2pdf.js` (html2canvas 
 | `sanitizeHtml`    | boolean | no      | When `true` (default), `htmlContent` is run through `DOMPurify` before rendering, stripping scripts and inline event handlers. Turn off only if you trust the source and need markup DOMPurify would strip. |
 | `autoGenerate`    | boolean | no      | When `true` (default), the PDF regenerates automatically 400 ms after any content input changes. Set `false` to control timing explicitly with `triggerGenerate` instead. |
 | `triggerGenerate` | boolean | no      | Bind to a Temporary State variable's value. When it becomes `true`, generation starts. See [Explicit trigger](#explicit-trigger) below, there's a setup step required, it's not as simple as pointing this at a literal. |
+| `showControls`    | boolean | no      | When `true` (default), renders the Download PDF button and status text. Set `false` to run the component fully headless/invisible, e.g. when driven entirely by `autoGenerate`/`triggerGenerate` and the `generated` event. |
 
 ## Outputs
 
@@ -69,7 +70,7 @@ Plain Unicode check and cross characters in `htmlContent` are automatically repl
 Styles from `cssContent` are injected into the render container alongside the HTML, so selectors like `.summary-card` apply exactly as they would in a browser. The component adds a small set of base styles (box-sizing, table resets, font stack) that do not conflict with user-provided styles.
 
 ### Download
-The **Download PDF** button renders the PDF once, triggers a browser download, and updates `pdfBase64` — all from the same render pass (no double rendering).
+The **Download PDF** button renders the PDF once, triggers a browser download, and updates `pdfBase64` — all from the same render pass (no double rendering). Only visible when `showControls` is `true`; with it `false` there's no way to trigger the browser download, use `autoGenerate`/`triggerGenerate` plus the `generated` event to consume `pdfBase64` instead.
 
 ---
 

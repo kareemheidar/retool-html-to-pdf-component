@@ -99,4 +99,10 @@ describe('HtmlToPdf', () => {
     expect(html2pdfMock).toHaveBeenCalledTimes(1)
     vi.useRealTimers()
   })
+
+  it('hides the Download PDF button and status text when showControls is false', () => {
+    stateStore.showControls = false
+    render(<HtmlToPdf />)
+    expect(screen.queryByText('Download PDF')).toBeNull()
+  })
 })

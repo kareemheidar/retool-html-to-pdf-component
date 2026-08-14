@@ -120,6 +120,11 @@ export const HtmlToPdf: FC = () => {
     initialValue: true,
   })
 
+  const [showControls] = Retool.useStateBoolean({
+    name: 'showControls',
+    initialValue: true,
+  })
+
   // App sets this to true when it wants generation to start; the component
   // consumes it and resets it back to false so it can be pulsed again later.
   const [triggerGenerate, setTriggerGenerate] = Retool.useStateBoolean({
@@ -326,35 +331,37 @@ export const HtmlToPdf: FC = () => {
     <div style={{ width: '100%' }}>
       <style>{baseStyles}</style>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center' }}>
-        <button
-          type="button"
-          onClick={download}
-          disabled={localBusy}
-          style={{
-            padding: '8px 14px',
-            borderRadius: 4,
-            border: '1px solid #16a34a',
-            background: localBusy ? '#86efac' : '#16a34a',
-            color: '#fff',
-            cursor: localBusy ? 'not-allowed' : 'pointer',
-          }}
-        >
-          Download PDF
-        </button>
+      {showControls && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={download}
+            disabled={localBusy}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 4,
+              border: '1px solid #16a34a',
+              background: localBusy ? '#86efac' : '#16a34a',
+              color: '#fff',
+              cursor: localBusy ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Download PDF
+          </button>
 
-        {status === 'rendering' || status === 'generating' ? (
-          <span style={{ color: '#555' }}>
-            {status === 'rendering' ? 'Preparing content…' : 'Rendering pages…'}
-          </span>
-        ) : null}
+          {status === 'rendering' || status === 'generating' ? (
+            <span style={{ color: '#555' }}>
+              {status === 'rendering' ? 'Preparing content…' : 'Rendering pages…'}
+            </span>
+          ) : null}
 
-        {status === 'success' ? <span style={{ color: '#16a34a' }}>PDF ready ✓</span> : null}
+          {status === 'success' ? <span style={{ color: '#16a34a' }}>PDF ready ✓</span> : null}
 
-        {status === 'error' ? (
-          <span style={{ color: '#dc2626' }}>Error: {error}</span>
-        ) : null}
-      </div>
+          {status === 'error' ? (
+            <span style={{ color: '#dc2626' }}>Error: {error}</span>
+          ) : null}
+        </div>
+      )}
 
       {/* Kept off-screen (not display:none) so it has real layout for html2pdf to
           snapshot, without showing the rendered HTML in the Retool UI. */}
