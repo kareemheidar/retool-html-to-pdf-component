@@ -72,6 +72,21 @@ Styles from `cssContent` are injected into the render container alongside the HT
 ### Download
 The **Download PDF** button renders the PDF once, triggers a browser download, and updates `pdfBase64` — all from the same render pass (no double rendering). Only visible when `showControls` is `true`; with it `false` there's no way to trigger the browser download, use `autoGenerate`/`triggerGenerate` plus the `generated` event to consume `pdfBase64` instead.
 
+### Hiding the component completely
+`showControls: false` only hides the button/status text rendered *inside* the component. Retool still hosts the component in its own iframe on the page, and that iframe is tab-reachable and announced by screen readers regardless of `showControls`.
+
+Do **not** use the component's native `Hidden` property to fix this, for custom components it stops the iframe from rendering entirely, which kills `autoGenerate`/`triggerGenerate`/timers, generation will silently never happen.
+
+Instead, leave `Hidden` set to `false` and hide it with per-app Custom CSS instead (**Settings → Custom CSS** in the app editor):
+
+```css
+._retool-htmlToPdf1 {
+  visibility: hidden !important;
+}
+```
+
+Replace `htmlToPdf1` with your component's actual name, Retool auto-generates a `_retool-<componentName>` class for every component. `visibility: hidden` only affects painting, it removes the component from the tab order and accessibility tree without unmounting it, so the component keeps running normally. Note it still reserves layout space (unlike `display: none`), shrink the component's Height in the Inspector if the empty gap matters.
+
 ---
 
 ## Quick wiring example
