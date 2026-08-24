@@ -125,6 +125,15 @@ export const HtmlToPdf: FC = () => {
     initialValue: true,
   })
 
+  // When true, each .summary-card's immediately preceding sibling (typically
+  // a section heading) is pulled into the same page-break-avoid wrapper, so
+  // the heading and its card can never be split across a page boundary.
+  // Off by default so existing apps' layouts are unaffected.
+  const [groupHeadingWithCard] = Retool.useStateBoolean({
+    name: 'groupHeadingWithCard',
+    initialValue: false,
+  })
+
   // App sets this to true when it wants generation to start; the component
   // consumes it and resets it back to false so it can be pulsed again later.
   const [triggerGenerate, setTriggerGenerate] = Retool.useStateBoolean({
@@ -179,10 +188,22 @@ export const HtmlToPdf: FC = () => {
 
       // Wrap each .summary-card so html2pdf positions the wrapper (not the card border)
       // at the page boundary, giving 12px of breathing room before the card's border.
+      // When groupHeadingWithCard is on, also pull in the card's immediately preceding
+      // sibling (its section heading) so the two can never be split across a page.
       doc.querySelectorAll('.summary-card').forEach((card) => {
         const wrapper = doc.createElement('div')
         wrapper.className = 'pdf-card-wrapper'
-        card.parentNode!.insertBefore(wrapper, card)
+
+        const preceding = card.previousElementSibling
+        const groupWithHeading =
+          groupHeadingWithCard &&
+          preceding &&
+          !preceding.classList.contains('pdf-card-wrapper') &&
+          !preceding.classList.contains('summary-card')
+
+        const anchor = groupWithHeading ? (preceding as Element) : card
+        anchor.parentNode!.insertBefore(wrapper, anchor)
+        if (groupWithHeading) wrapper.appendChild(preceding as Element)
         wrapper.appendChild(card)
       })
 
@@ -213,7 +234,7 @@ export const HtmlToPdf: FC = () => {
     } catch {
       return htmlContent
     }
-  }, [htmlContent, sanitizeHtml])
+  }, [htmlContent, sanitizeHtml, groupHeadingWithCard])
 
   const buildPdfBlob = useCallback(async (): Promise<Blob> => {
     if (!containerRef.current) {
