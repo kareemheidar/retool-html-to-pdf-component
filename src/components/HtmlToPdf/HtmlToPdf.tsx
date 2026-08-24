@@ -100,6 +100,14 @@ export const HtmlToPdf: FC = () => {
     initialValue: '',
   })
 
+  // Rendered only inside the PDF, never part of htmlContent, so apps that
+  // reuse htmlContent for an on-screen page never show this (e.g. a
+  // logo/title/metadata header meant for page 1 of the PDF only).
+  const [pdfHeaderHtml] = Retool.useStateString({
+    name: 'pdfHeaderHtml',
+    initialValue: '',
+  })
+
   const [referenceNumber] = Retool.useStateString({
     name: 'referenceNumber',
     initialValue: '',
@@ -181,9 +189,10 @@ export const HtmlToPdf: FC = () => {
   const requestIdRef = useRef(0)
 
   const processedHtml = useMemo(() => {
-    if (typeof window === 'undefined' || !htmlContent) return htmlContent
+    const combinedHtml = `${pdfHeaderHtml}${htmlContent}`
+    if (typeof window === 'undefined' || !combinedHtml) return combinedHtml
     try {
-      const safeHtml = sanitizeHtml ? DOMPurify.sanitize(htmlContent) : htmlContent
+      const safeHtml = sanitizeHtml ? DOMPurify.sanitize(combinedHtml) : combinedHtml
       const doc = new DOMParser().parseFromString(safeHtml, 'text/html')
 
       // Wrap each .summary-card so html2pdf positions the wrapper (not the card border)
@@ -242,9 +251,9 @@ export const HtmlToPdf: FC = () => {
 
       return doc.body.innerHTML
     } catch {
-      return htmlContent
+      return combinedHtml
     }
-  }, [htmlContent, sanitizeHtml, groupHeadingWithCard])
+  }, [htmlContent, pdfHeaderHtml, sanitizeHtml, groupHeadingWithCard])
 
   const buildPdfBlob = useCallback(async (): Promise<Blob> => {
     if (!containerRef.current) {

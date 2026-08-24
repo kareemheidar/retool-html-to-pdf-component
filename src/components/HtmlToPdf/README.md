@@ -10,6 +10,7 @@ Converts an HTML string to a multi-page A4 PDF using `html2pdf.js` (html2canvas 
 |-------------------|--------|----------|-------------|
 | `htmlContent`     | string | yes      | The HTML markup to render. Bind to a query or transformer output. |
 | `cssContent`      | string | no       | CSS rules to apply to the rendered HTML. Keeps styles separate from markup. |
+| `pdfHeaderHtml`   | string | no       | HTML prepended before `htmlContent` inside the PDF only (e.g. a logo/title/metadata block for page 1). Never part of `htmlContent`, so if your app reuses `htmlContent` for an on-screen page too, this never shows up there. |
 | `referenceNumber` | string | no       | If provided, renders a styled title block at the top of page 1 (e.g. `ILEXP-0067`). |
 | `fileName`        | string | no       | Name of the downloaded file. Defaults to `document.pdf`. |
 | `sanitizeHtml`    | boolean | no      | When `true` (default), `htmlContent` is run through `DOMPurify` before rendering, stripping scripts and inline event handlers. Turn off only if you trust the source and need markup DOMPurify would strip. |
