@@ -207,6 +207,16 @@ export const HtmlToPdf: FC = () => {
         wrapper.appendChild(card)
       })
 
+      // A PDF is a static document: nothing in it should be clickable or look
+      // like a link. An <a> without href is not a hyperlink per the HTML spec,
+      // so this drops interactivity/link styling while leaving every class
+      // (and any element-based CSS selector targeting "a") fully intact.
+      doc.querySelectorAll('a').forEach((a) => {
+        a.removeAttribute('href')
+        a.removeAttribute('target')
+        a.removeAttribute('rel')
+      })
+
       // Replace plain Unicode check/cross glyphs with modern inline SVG icons.
       const CHECK_SVG = `<svg class="pdf-icon" width="1em" height="1em" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 6L4.5 9L10.5 3" stroke="#111111" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>`
       const CROSS_SVG = `<svg class="pdf-icon" width="1em" height="1em" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2L10 10M10 2L2 10" stroke="#111111" stroke-width="1.75" stroke-linecap="round"/></svg>`
