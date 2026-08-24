@@ -189,7 +189,7 @@ export const HtmlToPdf: FC = () => {
   const requestIdRef = useRef(0)
 
   const processedHtml = useMemo(() => {
-    const combinedHtml = `${pdfHeaderHtml}${htmlContent}`
+    const combinedHtml = `${pdfHeaderHtml ?? ''}${htmlContent ?? ''}`
     if (typeof window === 'undefined' || !combinedHtml) return combinedHtml
     try {
       const safeHtml = sanitizeHtml ? DOMPurify.sanitize(combinedHtml) : combinedHtml
@@ -368,7 +368,16 @@ export const HtmlToPdf: FC = () => {
     if (!autoGenerate) return
     const timer = setTimeout(() => generateRef.current(), 400)
     return () => clearTimeout(timer)
-  }, [autoGenerate, htmlContent, cssContent, referenceNumber, fileName])
+  }, [
+    autoGenerate,
+    htmlContent,
+    cssContent,
+    referenceNumber,
+    fileName,
+    pdfHeaderHtml,
+    sanitizeHtml,
+    groupHeadingWithCard,
+  ])
 
   // Explicit trigger: app sets triggerGenerate to true, we consume it and
   // reset it back to false so the next pulse can be detected.
@@ -422,7 +431,7 @@ export const HtmlToPdf: FC = () => {
         <div ref={containerRef}>
           {cssContent && <style>{cssContent}</style>}
           <div className="pdf-render-root">
-            {referenceNumber && (
+            {referenceNumber && !pdfHeaderHtml && (
               <div className="pdf-title-block">
                 <div className="pdf-title-label">Claim Reference Number</div>
                 <div className="pdf-title-ref">{referenceNumber}</div>

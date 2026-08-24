@@ -11,7 +11,7 @@ Converts an HTML string to a multi-page A4 PDF using `html2pdf.js` (html2canvas 
 | `htmlContent`     | string | yes      | The HTML markup to render. Bind to a query or transformer output. |
 | `cssContent`      | string | no       | CSS rules to apply to the rendered HTML. Keeps styles separate from markup. |
 | `pdfHeaderHtml`   | string | no       | HTML prepended before `htmlContent` inside the PDF only (e.g. a logo/title/metadata block for page 1). Never part of `htmlContent`, so if your app reuses `htmlContent` for an on-screen page too, this never shows up there. |
-| `referenceNumber` | string | no       | If provided, renders a styled title block at the top of page 1 (e.g. `ILEXP-0067`). |
+| `referenceNumber` | string | no       | If provided, renders a styled title block at the top of page 1 (e.g. `ILEXP-0067`). Ignored whenever `pdfHeaderHtml` is also set, since the two are alternative ways to put a header on page 1 and shouldn't both render. |
 | `fileName`        | string | no       | Name of the downloaded file. Defaults to `document.pdf`. |
 | `sanitizeHtml`    | boolean | no      | When `true` (default), `htmlContent` is run through `DOMPurify` before rendering, stripping scripts and inline event handlers. Turn off only if you trust the source and need markup DOMPurify would strip. |
 | `autoGenerate`    | boolean | no      | When `true` (default), the PDF regenerates automatically 400 ms after any content input changes. Set `false` to control timing explicitly with `triggerGenerate` instead. |
@@ -40,7 +40,7 @@ Downstream flows should trigger off these events rather than a fixed delay. `pdf
 ## Behavior
 
 ### Auto-generation
-By default (`autoGenerate: true`), the component re-generates the PDF 400 ms after any input (`htmlContent`, `cssContent`, `referenceNumber`, `fileName`) changes. No button click required. `pdfBase64` is always up to date.
+By default (`autoGenerate: true`), the component re-generates the PDF 400 ms after any input (`htmlContent`, `cssContent`, `referenceNumber`, `fileName`, `pdfHeaderHtml`, `sanitizeHtml`, `groupHeadingWithCard`) changes. No button click required. `pdfBase64` is always up to date.
 
 ### Explicit trigger
 Set `autoGenerate` to `false` to stop regenerating on every input change (useful when the app sets several inputs in sequence and only wants one generation at the end).
