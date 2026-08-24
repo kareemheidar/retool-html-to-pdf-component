@@ -40,7 +40,7 @@ const baseStyles = `
   break-before: page;
 }
 .pdf-render-root .link-edit {
-  display: none;
+  display: none !important;
 }
 .pdf-icon {
   display: inline-block;
